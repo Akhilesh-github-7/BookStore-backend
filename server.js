@@ -39,6 +39,7 @@ app.get('/public/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
     if (filename.endsWith('.pdf')) {
         const filePath = path.join(__dirname, 'public', 'uploads', filename);
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.download(filePath, (err) => {
             if (err) {
                 console.error('Error downloading file:', err);
