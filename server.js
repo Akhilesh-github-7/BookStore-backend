@@ -37,10 +37,11 @@ app.use(cors()); // Enable CORS
 // Custom route to force download of PDF files
 app.get('/public/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
+    const downloadTitle = req.query.title ? `${req.query.title}.pdf` : filename;
     if (filename.endsWith('.pdf')) {
         const filePath = path.join(__dirname, 'public', 'uploads', filename);
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.download(filePath, (err) => {
+        res.setHeader('Content-Disposition', `attachment; filename="${downloadTitle}"`);
+        res.download(filePath, downloadTitle, (err) => {
             if (err) {
                 console.error('Error downloading file:', err);
                 res.status(500).send('Could not download the file.');
