@@ -10,7 +10,7 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-        origin: ['http://localhost:3000', 'http://localhost:5173'], // Adjust this to your frontend URL
+        origin: ['http://localhost:3000', 'http://localhost:5173', 'https://book-store-ak.vercel.app'], // Adjust this to your frontend URL
         methods: ['GET', 'POST']
     }
 });
