@@ -1,13 +1,14 @@
 
 const History = require('../models/History');
 const Book = require('../models/Book');
+const logger = require('../utils/logger');
 
 // @desc    Get user's reading history
 // @route   GET /api/history
 // @access  Private
 const getHistory = async (req, res) => {
     try {
-        console.log('Fetching history for user ID:', req.user._id);
+        logger.info(`Fetching history for user ID: ${req.user._id}`);
         const history = await History.aggregate([
             { $match: { user: req.user._id } },
             { $sort: { lastReadAt: -1 } },
@@ -70,7 +71,7 @@ const addToHistory = async (req, res) => {
         // Emit socket event
         const io = req.app.get('io');
         io.emit('readers_count_updated', updatedBook.toObject());
-        console.log('Emitted readers_count_updated for book:', updatedBook.toObject());
+        logger.info(`Emitted readers_count_updated for book: ${updatedBook._id}`);
 
         res.status(200).json(updatedBook); // Return the updated book
     } catch (error) {

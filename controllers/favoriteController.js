@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Book = require('../models/Book');
+const logger = require('../utils/logger');
 
 // @desc    Get user's favorite books
 // @route   GET /api/favorites
@@ -9,6 +10,7 @@ const getFavorites = async (req, res) => {
         const user = await User.findById(req.user._id).populate('favorites', 'title author coverImageURL averageRating summary filePath');
         res.json(user.favorites);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -35,6 +37,7 @@ const addFavorite = async (req, res) => {
         await user.save();
         res.json(user.favorites);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -53,6 +56,7 @@ const removeFavorite = async (req, res) => {
         await user.save();
         res.json(user.favorites);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };

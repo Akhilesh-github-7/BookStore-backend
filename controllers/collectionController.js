@@ -1,5 +1,6 @@
 const Collection = require('../models/Collection');
 const Book = require('../models/Book');
+const logger = require('../utils/logger');
 
 // @desc    Get all collections for a user
 // @route   GET /api/collections
@@ -9,6 +10,7 @@ const getCollections = async (req, res) => {
         const collections = await Collection.find({ owner: req.user._id }).populate('books');
         res.json(collections);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -28,6 +30,7 @@ const addCollection = async (req, res) => {
         const createdCollection = await collection.save();
         res.status(201).json(createdCollection);
     } catch (error) {
+        logger.error(error.message);
         res.status(400).json({ message: error.message });
     }
 };
@@ -50,6 +53,7 @@ const updateCollection = async (req, res) => {
             res.status(404).json({ message: 'Collection not found or user not authorized' });
         }
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -68,6 +72,7 @@ const deleteCollection = async (req, res) => {
             res.status(404).json({ message: 'Collection not found or user not authorized' });
         }
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -98,6 +103,7 @@ const addBookToCollection = async (req, res) => {
         await collection.save();
         res.json(collection);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -120,6 +126,7 @@ const removeBookFromCollection = async (req, res) => {
         await collection.save();
         res.json(collection);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -151,6 +158,7 @@ const addBookFromPublic = async (req, res) => {
         const createdBook = await newBook.save();
         res.status(201).json(createdBook);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };

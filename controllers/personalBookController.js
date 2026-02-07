@@ -1,5 +1,6 @@
 const Book = require('../models/Book');
-const History = require('../models/History');
+const bookService = require('../services/bookService');
+const logger = require('../utils/logger');
 
 // @desc    Get all books owned by the authenticated user
 // @route   GET /api/books/personal
@@ -42,6 +43,7 @@ const getPersonalBooks = async (req, res) => {
             currentPage: parseInt(page),
         });
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -68,6 +70,7 @@ const addPersonalBook = async (req, res) => {
         const createdBook = await book.save();
         res.status(201).json(createdBook);
     } catch (error) {
+        logger.error(error.message);
         res.status(400).json({ message: error.message });
     }
 };
@@ -96,6 +99,7 @@ const updatePersonalBook = async (req, res) => {
             res.status(404).json({ message: 'Book not found or user not authorized' });
         }
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
@@ -114,47 +118,17 @@ const deletePersonalBook = async (req, res) => {
             res.status(404).json({ message: 'Book not found or user not authorized' });
         }
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };
 
 const getTrendingBooks = async (req, res) => {
     try {
-        // First, find all public books and calculate their uniqueReadersCount
-        let allPublicBooks = await Book.find({ isPublic: true })
-            .select('_id title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath');
-
-        const bookIds = allPublicBooks.map(book => book._id);
-
-        const uniqueReadersCounts = await History.aggregate([
-            { $match: { book: { $in: bookIds } } },
-            { $group: { _id: '$book', uniqueReaders: { $addToSet: '$user' } } },
-            { $project: { _id: 1, uniqueReadersCount: { $size: '$uniqueReaders' } } }
-        ]);
-
-        const uniqueReadersMap = new Map(uniqueReadersCounts.map(item => [item._id.toString(), item.uniqueReadersCount]));
-
-        allPublicBooks = allPublicBooks.map(book => ({
-            ...book.toObject(),
-            uniqueReadersCount: uniqueReadersMap.get(book._id.toString()) || 0
-        }));
-
-        // Now sort these books based on recommendation criteria
-        const recommendedBooks = allPublicBooks.sort((a, b) => {
-            // Primary sort: averageRating (descending)
-            if (b.averageRating !== a.averageRating) {
-                return b.averageRating - a.averageRating;
-            }
-            // Secondary sort: numberOfRatings (descending)
-            if (b.numberOfRatings !== a.numberOfRatings) {
-                return b.numberOfRatings - a.numberOfRatings;
-            }
-            // Tertiary sort: uniqueReadersCount (descending)
-            return b.uniqueReadersCount - a.uniqueReadersCount;
-        }).slice(0, 4); // Limit to top 4 after sorting
-
+        const recommendedBooks = await bookService.getTrendingBooks();
         res.json(recommendedBooks);
     } catch (error) {
+        logger.error(error.message);
         res.status(500).json({ message: error.message });
     }
 };

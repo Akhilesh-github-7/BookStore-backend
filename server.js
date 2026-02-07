@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const logger = require('./utils/logger');
 const Book = require('./models/Book');
 
 const app = express();
@@ -19,20 +21,21 @@ app.set('io', io); // Make io accessible to our routes
 
 // Socket.io connection
 io.on('connection', (socket) => {
-    console.log('a user connected');
+    logger.info('a user connected');
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        logger.info('user disconnected');
     });
 });
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error(err));
+    .then(() => logger.info('MongoDB connected'))
+    .catch(err => logger.error(err));
 
 // Middleware
 app.use(express.json()); // Body parser
 app.use(cors()); // Enable CORS
+app.use(morgan('combined', { stream: { write: (message) => logger.http(message.trim()) } })); // HTTP Logging
 
 // Custom route to force download of PDF files
 app.get('/public/uploads/:filename', (req, res, next) => {
@@ -43,7 +46,7 @@ app.get('/public/uploads/:filename', (req, res, next) => {
         res.setHeader('Content-Disposition', `attachment; filename="${downloadTitle}"`);
         res.download(filePath, downloadTitle, (err) => {
             if (err) {
-                console.error('Error downloading file:', err);
+                logger.error(`Error downloading file: ${err}`);
                 res.status(500).send('Could not download the file.');
             }
         });
@@ -89,4 +92,4 @@ app.get('/api/debug/book/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5002;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => logger.info(`Server running on port ${PORT}`));
