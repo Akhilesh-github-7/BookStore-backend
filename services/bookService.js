@@ -27,7 +27,7 @@ class BookService {
             // Relying on book.uniqueReadersCount which is updated when a user adds to history.
             const books = await Book.find({ isPublic: true })
                 .populate('owner', 'username')
-                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath')
+                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath ratings')
                 .sort(sortOptions)
                 .skip(skip)
                 .limit(limitNum);
@@ -71,7 +71,7 @@ class BookService {
             // Optimized: Removed on-the-fly aggregation
             return await Book.find(filter)
                 .populate('owner', 'username')
-                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath');
+                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath ratings');
         } catch (error) {
             logger.error(`Error in searchPublicBooks: ${error.message}`);
             throw error;
@@ -93,18 +93,25 @@ class BookService {
                 throw new Error('Book not found');
             }
 
-            let alreadyRated;
+            // Uniqueness Check: Find if user (by ID) or guest (by IP) has already rated
+            let ratingIndex = -1;
             if (user) {
-                alreadyRated = book.ratings.find(
+                ratingIndex = book.ratings.findIndex(
                     (r) => r.user && r.user.toString() === user._id.toString()
                 );
             } else {
-                alreadyRated = book.ratings.find((r) => r.ratedByIp === ip);
+                ratingIndex = book.ratings.findIndex(
+                    (r) => !r.user && r.ratedByIp === ip
+                );
             }
 
-            if (alreadyRated) {
-                alreadyRated.rating = rating;
+            if (ratingIndex !== -1) {
+                // Update existing rating - Prevents duplicate entries
+                book.ratings[ratingIndex].rating = rating;
+                // Also update IP in case it changed for a logged in user (optional but good for tracking)
+                if (!user) book.ratings[ratingIndex].ratedByIp = ip; 
             } else {
+                // Add new rating entry
                 const newRating = { rating };
                 if (user) {
                     newRating.user = user._id;
@@ -114,25 +121,20 @@ class BookService {
                 book.ratings.push(newRating);
             }
 
-            // Recalculate average
-            const uniqueRaters = new Set();
-            let totalRating = 0;
-            
-            book.ratings.forEach(r => {
-                if (r.user) uniqueRaters.add(r.user.toString());
-                else if (r.ratedByIp) uniqueRaters.add(r.ratedByIp);
-                totalRating += r.rating;
-            });
-
-            book.numberOfRatings = uniqueRaters.size;
+            // Recalculate average and count using the unique ratings array
+            const totalRating = book.ratings.reduce((acc, item) => item.rating + acc, 0);
+            book.numberOfRatings = book.ratings.length;
             book.averageRating = totalRating / book.ratings.length;
 
             await book.save();
             
-            // Re-fetch populated
-            return await Book.findById(bookId)
+            // Re-fetch with essential fields plus the current user's specific rating info
+            const updatedBook = await Book.findById(bookId)
                 .populate('owner', 'username')
-                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath');
+                .select('title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath ratings');
+
+            // We return the ratings array so the frontend can find the user's specific rating
+            return updatedBook;
 
         } catch (error) {
             logger.error(`Error in rateBook: ${error.message}`);
@@ -208,7 +210,7 @@ class BookService {
             return await Book.find({ isPublic: true })
                 .sort({ averageRating: -1, numberOfRatings: -1, uniqueReadersCount: -1 })
                 .limit(4)
-                .select('_id title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath');
+                .select('_id title author coverImageURL averageRating numberOfRatings uniqueReadersCount summary filePath ratings');
         } catch (error) {
             logger.error(`Error in getTrendingBooks: ${error.message}`);
             throw error;

@@ -2,8 +2,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 
-const generateToken = (id, username, profileImage, city, country) => {
-    return jwt.sign({ id, username, profileImage, city, country }, process.env.JWT_SECRET, { expiresIn: '1h' });
+const generateToken = (id, username, profileImage, city, country, createdAt) => {
+    return jwt.sign({ id, username, profileImage, city, country, createdAt }, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
 // @desc    Register new user
@@ -31,7 +31,7 @@ const registerUser = async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
-                token: generateToken(user._id, user.username, user.profileImage, user.city, user.country)
+                token: generateToken(user._id, user.username, user.profileImage, user.city, user.country, user.createdAt)
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -57,7 +57,7 @@ const loginUser = async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
-                token: generateToken(user._id, user.username, user.profileImage, user.city, user.country)
+                token: generateToken(user._id, user.username, user.profileImage, user.city, user.country, user.createdAt)
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
@@ -88,7 +88,7 @@ const updateUserProfile = async (req, res) => {
                 email: updatedUser.email,
                 city: updatedUser.city,
                 country: updatedUser.country,
-                token: generateToken(updatedUser._id, updatedUser.username, updatedUser.profileImage, updatedUser.city, updatedUser.country)
+                token: generateToken(updatedUser._id, updatedUser.username, updatedUser.profileImage, updatedUser.city, updatedUser.country, updatedUser.createdAt)
             });
         } else {
             res.status(404).json({ message: 'User not found' });
