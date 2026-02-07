@@ -131,4 +131,47 @@ const uploadProfileImage = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser, updateUserProfile, uploadProfileImage };
+// @desc    Change user password
+// @route   PUT /api/auth/password
+// @access  Private
+const changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (user && (await user.matchPassword(currentPassword))) {
+            user.password = newPassword;
+            await user.save();
+            logger.info(`Password changed for user: ${user.username}`);
+            res.json({ message: 'Password updated successfully' });
+        } else {
+            res.status(401).json({ message: 'Invalid current password' });
+        }
+    } catch (error) {
+        logger.error(error.message);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Delete user account
+// @route   DELETE /api/auth/profile
+// @access  Private
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (user) {
+            await User.deleteOne({ _id: user._id });
+            logger.info(`User deleted: ${user.username}`);
+            res.json({ message: 'User deleted successfully' });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        logger.error(error.message);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { registerUser, loginUser, updateUserProfile, uploadProfileImage, changePassword, deleteUser };
