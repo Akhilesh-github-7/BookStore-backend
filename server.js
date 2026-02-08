@@ -1,27 +1,13 @@
 const fs = require('fs');
 const path = require('path');
-console.log('DEBUG: Current directory:', process.cwd());
-try {
-  const dirContents = fs.readdirSync(process.cwd());
-  console.log('DEBUG: Directory listing:', dirContents);
-  if (dirContents.includes('node_modules')) {
-     const modules = fs.readdirSync(path.join(process.cwd(), 'node_modules'));
-     console.log(`DEBUG: node_modules contains ${modules.length} items. First 10:`, modules.slice(0, 10));
-     console.log('DEBUG: Is dotenv in node_modules?', modules.includes('dotenv'));
-  } else {
-     console.log('DEBUG: node_modules NOT FOUND in current directory');
-  }
-} catch (err) {
-  console.error('DEBUG: Error examining file system:', err);
+
+// Ensure upload directories exist
+const uploadDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-try {
-  require('dotenv').config();
-  console.log('DEBUG: dotenv loaded successfully');
-} catch (e) {
-  console.error('DEBUG: Failed to load dotenv:', e.message);
-}
-
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -34,12 +20,12 @@ const app = express();
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, {
     cors: {
-        origin: ['http://localhost:3000', 'http://localhost:5173', 'https://book-store-ak.vercel.app'], // Adjust this to your frontend URL
+        origin: ['http://localhost:3000', 'http://localhost:5173', 'https://book-store-ak.vercel.app', 'https://bookstore-ak.vercel.app'],
         methods: ['GET', 'POST']
     }
 });
 
-app.set('io', io); // Make io accessible to our routes
+app.set('io', io);
 
 // Socket.io connection
 io.on('connection', (socket) => {
@@ -55,29 +41,33 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => logger.error(err));
 
 // Middleware
-app.use(express.json()); // Body parser
-app.use(cors()); // Enable CORS
-app.use(morgan('combined', { stream: { write: (message) => logger.http(message.trim()) } })); // HTTP Logging
+app.use(express.json());
+app.use(cors());
+app.use(morgan('combined', { stream: { write: (message) => logger.http(message.trim()) } }));
 
 // Custom route to force download of PDF files
 app.get('/public/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
-    const downloadTitle = req.query.title ? `${req.query.title}.pdf` : filename;
     if (filename.endsWith('.pdf')) {
         const filePath = path.join(__dirname, 'public', 'uploads', filename);
+        const downloadTitle = req.query.title ? `${req.query.title}.pdf` : filename;
         res.setHeader('Content-Disposition', `attachment; filename="${downloadTitle}"`);
-        res.download(filePath, downloadTitle, (err) => {
+        return res.download(filePath, downloadTitle, (err) => {
             if (err) {
                 logger.error(`Error downloading file: ${err}`);
-                res.status(500).send('Could not download the file.');
+                if (!res.headersSent) {
+                    res.status(500).send('Could not download the file.');
+                }
             }
         });
-    } else {
-        next(); // Continue to the next middleware if not a PDF
     }
+    next();
 });
 
-app.use(express.static('public')); // Serve static files from the 'public' directory
+// Serve static files from 'public' directory
+// This handles requests to /uploads/... and /public/uploads/...
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limiting
 const limiter = rateLimit({
