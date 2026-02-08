@@ -1,4 +1,27 @@
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+console.log('DEBUG: Current directory:', process.cwd());
+try {
+  const dirContents = fs.readdirSync(process.cwd());
+  console.log('DEBUG: Directory listing:', dirContents);
+  if (dirContents.includes('node_modules')) {
+     const modules = fs.readdirSync(path.join(process.cwd(), 'node_modules'));
+     console.log(`DEBUG: node_modules contains ${modules.length} items. First 10:`, modules.slice(0, 10));
+     console.log('DEBUG: Is dotenv in node_modules?', modules.includes('dotenv'));
+  } else {
+     console.log('DEBUG: node_modules NOT FOUND in current directory');
+  }
+} catch (err) {
+  console.error('DEBUG: Error examining file system:', err);
+}
+
+try {
+  require('dotenv').config();
+  console.log('DEBUG: dotenv loaded successfully');
+} catch (e) {
+  console.error('DEBUG: Failed to load dotenv:', e.message);
+}
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
