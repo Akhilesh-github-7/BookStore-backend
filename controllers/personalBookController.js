@@ -63,8 +63,8 @@ const addPersonalBook = async (req, res) => {
             summary,
             owner: req.user._id,
             isPublic: req.body.isPublic === 'true' || req.body.isPublic === true,
-            coverImageURL: req.files.coverImage ? ('/uploads/' + req.files.coverImage[0].filename).replace(/\\/g, '/') : '',
-            filePath: req.files.bookPdf ? ('/uploads/' + req.files.bookPdf[0].filename).replace(/\\/g, '/') : ''
+            coverImageURL: req.files.coverImage ? req.files.coverImage[0].path : '',
+            filePath: req.files.bookPdf ? req.files.bookPdf[0].path : ''
         });
 
         const createdBook = await book.save();

@@ -108,8 +108,8 @@ const uploadProfileImage = async (req, res) => {
 
         if (user) {
             if (req.file) {
-                logger.info(`Profile image uploaded for user: ${user.username}, file: ${req.file.filename}`);
-                user.profileImage = `/uploads/${req.file.filename}`;
+                logger.info(`Profile image uploaded for user: ${user.username}, file: ${req.file.path}`);
+                user.profileImage = req.file.path;
                 const updatedUser = await user.save();
 
                 res.json({

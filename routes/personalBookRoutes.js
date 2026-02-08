@@ -3,7 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { getPersonalBooks, addPersonalBook, updatePersonalBook, deletePersonalBook, getTrendingBooks } = require('../controllers/personalBookController');
 
-const upload = require('../config/multerConfig');
+const { upload } = require('../config/cloudinaryConfig');
 
 router.route('/').get(protect, getPersonalBooks).post(protect, upload, addPersonalBook);
 router.route('/trending').get(protect, getTrendingBooks);

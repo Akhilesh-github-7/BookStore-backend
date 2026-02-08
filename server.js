@@ -1,16 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-
-// Ensure upload directories exist
-const uploadDir = path.join(__dirname, 'public', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const logger = require('./utils/logger');
@@ -45,28 +37,7 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('combined', { stream: { write: (message) => logger.http(message.trim()) } }));
 
-// Custom route to force download of PDF files
-app.get('/public/uploads/:filename', (req, res, next) => {
-    const filename = req.params.filename;
-    if (filename.endsWith('.pdf')) {
-        const filePath = path.join(__dirname, 'public', 'uploads', filename);
-        const downloadTitle = req.query.title ? `${req.query.title}.pdf` : filename;
-        res.setHeader('Content-Disposition', `attachment; filename="${downloadTitle}"`);
-        return res.download(filePath, downloadTitle, (err) => {
-            if (err) {
-                logger.error(`Error downloading file: ${err}`);
-                if (!res.headersSent) {
-                    res.status(500).send('Could not download the file.');
-                }
-            }
-        });
-    }
-    next();
-});
-
-// Serve static files from 'public' directory
-// This handles requests to /uploads/... and /public/uploads/...
-app.use('/public', express.static(path.join(__dirname, 'public')));
+// Serve static files from 'public' directory (kept for local assets like logos)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate limiting
