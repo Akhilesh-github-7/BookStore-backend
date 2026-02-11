@@ -7,6 +7,6 @@ const { upload } = require('../config/cloudinaryConfig');
 
 router.route('/').get(protect, getPersonalBooks).post(protect, upload, addPersonalBook);
 router.route('/trending').get(protect, getTrendingBooks);
-router.route('/:id').put(protect, updatePersonalBook).delete(protect, deletePersonalBook);
+router.route('/:id').put(protect, upload, updatePersonalBook).delete(protect, deletePersonalBook);
 
 module.exports = router;

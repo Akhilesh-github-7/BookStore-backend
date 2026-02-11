@@ -79,7 +79,7 @@ const addPersonalBook = async (req, res) => {
 // @route   PUT /api/books/personal/:id
 // @access  Private
 const updatePersonalBook = async (req, res) => {
-    const { title, author, genre, summary, isPublic, coverImageURL } = req.body;
+    const { title, author, genre, summary, isPublic } = req.body;
     const genreArray = genre ? genre.split(',').map(g => g.trim()).filter(g => g.length > 0) : undefined;
 
     try {
@@ -90,8 +90,16 @@ const updatePersonalBook = async (req, res) => {
             book.author = author || book.author;
             book.genre = genreArray !== undefined ? genreArray : book.genre;
             book.summary = summary || book.summary;
-            book.isPublic = isPublic !== undefined ? isPublic : book.isPublic;
-            book.coverImageURL = coverImageURL || book.coverImageURL;
+            book.isPublic = isPublic !== undefined ? (isPublic === 'true' || isPublic === true) : book.isPublic;
+            
+            if (req.files) {
+                if (req.files.coverImage) {
+                    book.coverImageURL = req.files.coverImage[0].path;
+                }
+                if (req.files.bookPdf) {
+                    book.filePath = req.files.bookPdf[0].path;
+                }
+            }
 
             const updatedBook = await book.save();
             res.json(updatedBook);
