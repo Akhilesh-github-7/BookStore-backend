@@ -17,8 +17,8 @@ const bookStorage = new CloudinaryStorage({
     return {
       folder: 'bookstore/books',
       public_id: file.fieldname + '-' + Date.now(),
-      resource_type: 'auto', // Let Cloudinary decide
-      access_mode: 'public'  // Explicitly set to public
+      resource_type: 'auto',
+      type: 'upload'
     };
   }
 });

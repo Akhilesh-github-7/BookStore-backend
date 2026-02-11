@@ -68,7 +68,7 @@ const addPersonalBook = async (req, res) => {
         });
 
         const createdBook = await book.save();
-        res.status(201).json(createdBook);
+        res.status(201).json({ message: 'Book added successfully!', book: createdBook });
     } catch (error) {
         logger.error(error.message);
         res.status(400).json({ message: error.message });
@@ -102,7 +102,7 @@ const updatePersonalBook = async (req, res) => {
             }
 
             const updatedBook = await book.save();
-            res.json(updatedBook);
+            res.json({ message: 'Book details updated successfully!', book: updatedBook });
         } else {
             res.status(404).json({ message: 'Book not found or user not authorized' });
         }
