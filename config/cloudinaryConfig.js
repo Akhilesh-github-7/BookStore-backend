@@ -14,13 +14,11 @@ cloudinary.config({
 const bookStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
-    const isPdf = file.mimetype === 'application/pdf';
     return {
       folder: 'bookstore/books',
       public_id: file.fieldname + '-' + Date.now(),
-      resource_type: isPdf ? 'image' : 'image',
-      format: isPdf ? 'pdf' : undefined,
-      type: 'upload' // Explicitly set to 'upload' for public access
+      resource_type: 'auto', // Let Cloudinary decide
+      access_mode: 'public'  // Explicitly set to public
     };
   }
 });
