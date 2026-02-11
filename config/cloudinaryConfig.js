@@ -10,16 +10,17 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Setup Cloudinary Storage for Books (Covers and PDFs - Note: PDFs might need specific handling or stay local if large)
+// Setup Cloudinary Storage for Books (Covers and PDFs)
 const bookStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     const isPdf = file.mimetype === 'application/pdf';
     return {
       folder: 'bookstore/books',
-      format: isPdf ? 'pdf' : undefined, // Cloudinary handles format automatically for images
       public_id: file.fieldname + '-' + Date.now(),
-      resource_type: isPdf ? 'raw' : 'image' // PDFs must be 'raw' or 'auto'
+      resource_type: isPdf ? 'image' : 'image',
+      format: isPdf ? 'pdf' : undefined,
+      type: 'upload' // Explicitly set to 'upload' for public access
     };
   }
 });
